@@ -28,9 +28,16 @@ def registrazione_utente(redis_conn):
     print("Registrazione completata con successo.")
     return True
 
+def ricerca_utenti2(redis_conn, nome_utente_parziale):
+    utenti_trovati = []
+    for utente in redis_conn.hkeys("utenti"):
+        if nome_utente_parziale.lower() in utente.decode().lower():
+            utenti_trovati.append(utente.decode())
+    return utenti_trovati
+
 def ricerca_utenti(redis_conn):
     nome_utente_parziale = input("Inserisci il nome utente da cercare (anche parziale): ")
-    utenti_trovati = ricerca_utenti(redis_conn, nome_utente_parziale)
+    utenti_trovati = ricerca_utenti2(redis_conn, nome_utente_parziale)
 
     if utenti_trovati:
         print("Utenti trovati:", utenti_trovati)
