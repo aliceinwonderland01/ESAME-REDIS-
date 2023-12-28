@@ -44,6 +44,45 @@ def ricerca_utenti(redis_conn):
     else:
         print("Nessun utente trovato.")
 
+def aggiungi_contatto(redis_conn, utente_corrente):
+    utenti_disponibili = [utente.decode() for utente in redis_conn.hkeys("utenti")]
+    if not utenti_disponibili:
+        print("Nessun utente disponibile.")
+        return
+
+    print("Elenco degli utenti disponibili:")
+    for i, utente in enumerate(utenti_disponibili, start=1):
+        print(f"{i}. {utente}")
+
+    while True:
+        try:
+            indice_utente = int(input("Seleziona il numero corrispondente all'utente da aggiungere: "))
+            if 1 <= indice_utente <= len(utenti_disponibili):
+                nome_contatto = utenti_disponibili[indice_utente - 1]
+                break
+            else:
+                print("Numero non valido. Riprova.")
+        except ValueError:
+            print("Inserire un numero valido. Riprova.")
+
+    redis_conn.hset("lista_contatti", utente_corrente, nome_contatto)
+    print(f"{nome_contatto} aggiunto alla lista contatti.")
+
+def menu_aggiungi_contatto(redis_conn, utente_corrente):
+    while True:
+        print("\nMenù Aggiunta Contatto:")
+        print("1. Visualizza utenti e aggiungi alla lista contatti")
+        print("2. Torna al Menù Dopo Login")
+
+        scelta_aggiunta_contatto = input("Seleziona un'opzione (1/2): ")
+
+        if scelta_aggiunta_contatto == '1':
+            aggiungi_contatto(redis_conn, utente_corrente)
+        elif scelta_aggiunta_contatto == '2':
+            break
+        else:
+            print("Scelta non valida. Riprova.")
+
 def main():
     r = redis.Redis(
         host='redis-15124.c135.eu-central-1-1.ec2.cloud.redislabs.com',
@@ -67,17 +106,19 @@ def main():
         elif scelta_iniziale == '2':
             utente_corrente = login_utente(r)
             if utente_corrente is not None:
-                # Dopo il login, mostra il secondo menù
                 while True:
                     print("\nMenù Dopo Login:")
                     print("1. Ricerca utenti")
-                    print("2. Torna al Menù Iniziale")
+                    print("2. Aggiungi un utente alla tua lista contatti")
+                    print("3. Torna al Menù Iniziale")
 
-                    scelta_dopo_login = input("Seleziona un'opzione (1/2): ")
+                    scelta_dopo_login = input("Seleziona un'opzione (1/2/3): ")
 
                     if scelta_dopo_login == '1':
                         ricerca_utenti(r)
                     elif scelta_dopo_login == '2':
+                        menu_aggiungi_contatto(r, utente_corrente)
+                    elif scelta_dopo_login == '3':
                         break
                     else:
                         print("Scelta non valida. Riprova.")
