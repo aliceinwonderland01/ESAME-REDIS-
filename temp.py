@@ -69,6 +69,7 @@ def aggiungi_contatto(redis_conn, utente_corrente):
     print(f"{nome_contatto} aggiunto alla lista contatti.")
 
 def menu_aggiungi_contatto(redis_conn, utente_corrente):
+
     while True:
         print("\nMenù Aggiunta Contatto:")
         print("1. Visualizza utenti e aggiungi alla lista contatti")
@@ -82,6 +83,19 @@ def menu_aggiungi_contatto(redis_conn, utente_corrente):
             break
         else:
             print("Scelta non valida. Riprova.")
+
+def dnd_attivo(redis_conn, utente_corrente):
+    return redis_conn.hexists("dnd", utente_corrente)
+
+def attiva_disattiva_dnd(redis_conn, utente_corrente):
+    stato_attuale = dnd_attivo(redis_conn, utente_corrente)
+
+    if stato_attuale:
+        redis_conn.hdel("dnd", utente_corrente)
+        print("Modalità 'Do Not Disturb' disattivata.")
+    else:
+        redis_conn.hset("dnd", utente_corrente, "attivato")
+        print("Modalità 'Do Not Disturb' attivata.")
 
 def main():
     r = redis.Redis(
@@ -107,18 +121,23 @@ def main():
             utente_corrente = login_utente(r)
             if utente_corrente is not None:
                 while True:
+                    stato_attuale_dnd = "Attiva" if dnd_attivo(r, utente_corrente) else "Disattiva"
                     print("\nMenù Dopo Login:")
+                    print(f"0. Modalità Do Not Disturb: {stato_attuale_dnd}")
                     print("1. Ricerca utenti")
                     print("2. Aggiungi un utente alla tua lista contatti")
-                    print("3. Torna al Menù Iniziale")
+                    print("3. Attiva/Disattiva Modalità Do Not Disturb")
+                    print("4. Torna al Menù Iniziale")
 
-                    scelta_dopo_login = input("Seleziona un'opzione (1/2/3): ")
+                    scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4): ")
 
                     if scelta_dopo_login == '1':
                         ricerca_utenti(r)
                     elif scelta_dopo_login == '2':
                         menu_aggiungi_contatto(r, utente_corrente)
-                    elif scelta_dopo_login == '3':
+                    elif scelta_dopo_login == '0':
+                        attiva_disattiva_dnd(r, utente_corrente)
+                    elif scelta_dopo_login == '4':
                         break
                     else:
                         print("Scelta non valida. Riprova.")
