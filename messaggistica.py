@@ -121,15 +121,19 @@ def attiva_disattiva_dnd(redis_conn, utente_corrente):
 
 
 def invia_messaggio(redis_conn, mittente, destinatario, testo):
-    istante_invio = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if dnd_attivo(redis_conn, destinatario):
+        print(f"Impossibile inviare messaggi a {destinatario}. La modalità 'Do Not Disturb' è attiva.")
+        return
+    istante_invio = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     messaggio = f"{mittente}: {testo} [{istante_invio}]"
 
-    # Archivia il messaggio nei canali del mittente e del destinatario
     chiave_mittente = f"chat:{mittente}:{destinatario}"
     chiave_destinatario = f"chat:{destinatario}:{mittente}"
 
     redis_conn.rpush(chiave_mittente, messaggio)
     redis_conn.rpush(chiave_destinatario, messaggio)
+    print(f"Messaggio inviato a {destinatario}: {testo} [{istante_invio}]")
+
 
 def inizia_chat_a_tempo(redis_conn, mittente, destinatario):
     timestamp_inizio = datetime.now()
@@ -290,6 +294,8 @@ def gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corr
     elif scelta_dopo_login == '6':
         destinatario = input("Inserisci il nome utente del destinatario: ")
         leggi_chat(connessione_redis, utente_corrente, destinatario)
+    elif scelta_dopo_login == '7':
+        pass  # Aggiungi qui eventuali altre scelte
     else:
         print("Scelta non valida. Riprova.")
 
