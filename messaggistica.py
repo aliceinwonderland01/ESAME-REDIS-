@@ -1,6 +1,5 @@
 import redis
 import threading
-import json
 from datetime import datetime, timedelta
 
 
@@ -55,23 +54,19 @@ def ricerca_utenti(redis_conn):
 def aggiungi_contatto(redis_conn, utente_corrente):
     nome_contatto = input("Inserisci il nome utente da aggiungere alla tua lista contatti: ")
 
-    # Verifica se l'utente corrente sta cercando di aggiungere se stesso
     if nome_contatto == utente_corrente:
         print("Non puoi aggiungere te stesso alla lista contatti.")
         return
 
-    # Verifica se l'utente corrente è già presente nella lista contatti
     lista_contatti = redis_conn.hget("lista_contatti", utente_corrente)
     if lista_contatti and nome_contatto in lista_contatti.decode().split(','):
         print(f"{nome_contatto} è già presente nella tua lista contatti.")
         return
 
-    # Verifica se l'utente che si sta cercando di aggiungere esiste
     if not redis_conn.hexists("utenti", nome_contatto):
         print(f"L'utente {nome_contatto} non esiste.")
         return
 
-    # Aggiungi il contatto alla lista contatti dell'utente corrente
     if lista_contatti:
         lista_contatti = f"{lista_contatti.decode()},{nome_contatto}"
     else:
@@ -92,7 +87,6 @@ def menu_aggiungi_contatto(redis_conn, utente_corrente):
         if scelta_aggiunta_contatto == '1':
             aggiungi_contatto(redis_conn, utente_corrente)
 
-            # Printa la lista contatti aggiornata
             lista_contatti_aggiornata = redis_conn.hget("lista_contatti", utente_corrente)
             if lista_contatti_aggiornata:
                 print(f"Lista Contatti Aggiornata: {lista_contatti_aggiornata.decode()}")
@@ -121,6 +115,11 @@ def attiva_disattiva_dnd(redis_conn, utente_corrente):
 
 
 def invia_messaggio(redis_conn, mittente, destinatario, testo):
+    lista_contatti = redis_conn.hget("lista_contatti", mittente)
+    if lista_contatti and destinatario not in lista_contatti.decode().split(','):
+        print(f"Impossibile inviare messaggi a {destinatario}. Non è presente nella tua lista contatti.")
+        return
+
     if dnd_attivo(redis_conn, destinatario):
         print(f"Impossibile inviare messaggi a {destinatario}. La modalità 'Do Not Disturb' è attiva.")
         return
@@ -167,19 +166,16 @@ def invia_messaggio_chat_tempo(redis_conn, mittente, destinatario, testo, chiave
 def leggi_chat(redis_conn, utente_corrente, destinatario):
     chiave_chat = f"chat:{utente_corrente}:{destinatario}"
 
-    # Recupera la lista dei messaggi dalla chiave della chat
     lista_messaggi = redis_conn.lrange(chiave_chat, 0, -1)
 
     print(f"\n>> Chat con {destinatario} <<")
 
-    # Ordina i messaggi per data e istante di invio
     lista_messaggi.sort(key=lambda x: x.decode().split("[")[1])
 
     for messaggio in lista_messaggi:
         messaggio_decodificato = messaggio.decode()
         prefisso = ">" if messaggio_decodificato.startswith(f"{utente_corrente}:") else "<"
 
-        # Estrai data e istante di invio dal messaggio
         dati_messaggio = messaggio_decodificato.split("[")
         testo_messaggio = dati_messaggio[0].strip()
         data_istante_invio = dati_messaggio[1].strip("]")
@@ -191,10 +187,8 @@ def ricevi_notifiche_push(redis_conn, utente_corrente):
     canale_notifiche = f"notifiche:{utente_corrente}"
 
     def gestisci_notifica(message):
-        # Aggiorna la schermata o effettua altre azioni con la notifica ricevuta
         print(f"Notifica ricevuta: {message['data']}")
 
-    # Sottoscrivi il canale delle notifiche
     pubsub = redis_conn.pubsub()
     pubsub.subscribe(**{canale_notifiche: gestisci_notifica})
     thread_notifiche = threading.Thread(target=pubsub.run_in_thread, daemon=True)
