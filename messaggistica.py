@@ -1,7 +1,5 @@
 import redis
-import threading
 from datetime import datetime, timedelta
-
 
 def login_utente(redis_conn):
     nome_utente = input("Inserisci il nome utente: ")
@@ -19,7 +17,6 @@ def login_utente(redis_conn):
         print("Password errata. Riprova.")
         return None
 
-
 def registrazione_utente(redis_conn):
     nome_utente = input("Inserisci il nome utente: ")
     password = input("Inserisci la password: ")
@@ -32,14 +29,12 @@ def registrazione_utente(redis_conn):
     print("Registrazione completata con successo.")
     return True
 
-
 def ricerca_utenti2(redis_conn, nome_utente_parziale):
     utenti_trovati = []
     for utente in redis_conn.hkeys("utenti"):
         if nome_utente_parziale.lower() in utente.decode().lower():
             utenti_trovati.append(utente.decode())
     return utenti_trovati
-
 
 def ricerca_utenti(redis_conn):
     nome_utente_parziale = input("Inserisci il nome utente da cercare (anche parziale): ")
@@ -49,7 +44,6 @@ def ricerca_utenti(redis_conn):
         print("Utenti trovati:", utenti_trovati)
     else:
         print("Nessun utente trovato.")
-
 
 def aggiungi_contatto(redis_conn, utente_corrente):
     nome_contatto = input("Inserisci il nome utente da aggiungere alla tua lista contatti: ")
@@ -75,7 +69,6 @@ def aggiungi_contatto(redis_conn, utente_corrente):
     redis_conn.hset("lista_contatti", utente_corrente, lista_contatti)
     print(f"{nome_contatto} aggiunto alla lista contatti.")
 
-
 def menu_aggiungi_contatto(redis_conn, utente_corrente):
     while True:
         print("\nMenù Aggiunta Contatto:")
@@ -98,10 +91,8 @@ def menu_aggiungi_contatto(redis_conn, utente_corrente):
         else:
             print("Scelta non valida. Riprova.")
 
-
 def dnd_attivo(redis_conn, utente_corrente):
     return redis_conn.hexists("dnd", utente_corrente)
-
 
 def attiva_disattiva_dnd(redis_conn, utente_corrente):
     stato_attuale = dnd_attivo(redis_conn, utente_corrente)
@@ -112,7 +103,6 @@ def attiva_disattiva_dnd(redis_conn, utente_corrente):
     else:
         redis_conn.hset("dnd", utente_corrente, "attivato")
         print("Modalità 'Do Not Disturb' attivata.")
-
 
 def invia_messaggio(redis_conn, mittente, destinatario, testo):
     lista_contatti = redis_conn.hget("lista_contatti", mittente)
@@ -133,35 +123,76 @@ def invia_messaggio(redis_conn, mittente, destinatario, testo):
     redis_conn.rpush(chiave_destinatario, messaggio)
     print(f"Messaggio inviato a {destinatario}: {testo} [{istante_invio}]")
 
+#    chiave_chat_tempo, timestamp_inizio = inizia_chat_a_tempo(redis_conn, mittente, destinatario)
+#    print(f"Chat a tempo con {destinatario} avviata. La chat si chiuderà automaticamente dopo 60 secondi.")
 
-def inizia_chat_a_tempo(redis_conn, mittente, destinatario):
-    timestamp_inizio = datetime.now()
-    chiave_chat_tempo = f"chat_tempo:{mittente}:{destinatario}"
-    redis_conn.set(chiave_chat_tempo, timestamp_inizio)
-
-    return chiave_chat_tempo, timestamp_inizio
+#    invia_notifica_push(redis_conn, destinatario)
 
 
-def invia_messaggio_chat_tempo(redis_conn, mittente, destinatario, testo, chiave_chat_tempo):
-    timestamp_inizio = redis_conn.get(chiave_chat_tempo)
-
-    if timestamp_inizio:
-        timestamp_inizio = datetime.fromisoformat(timestamp_inizio.decode())
-        timestamp_attuale = datetime.now()
-
-        if timestamp_attuale - timestamp_inizio <= timedelta(minutes=1):
-            ora_invio = timestamp_attuale.strftime("%Y-%m-%d %H:%M:%S")
-            messaggio = f"> {testo} [{ora_invio}]"
-
-            chiave_chat = f"chat:{mittente}:{destinatario}"
-            redis_conn.rpush(chiave_chat, messaggio)
-
-            print(f"Messaggio inviato a {destinatario}: {testo}")
-        else:
-            print("Impossibile inviare messaggi. La chat a tempo è scaduta.")
-    else:
-        print("La chat a tempo non è stata inizializzata correttamente.")
-
+# def inizia_chat_a_tempo(redis_conn, mittente, destinatario):
+#     timestamp_inizio = datetime.now()
+#     chiave_chat_tempo = f"chat_tempo:{mittente}:{destinatario}"
+#     timestamp_inizio_str = timestamp_inizio.strftime("%Y-%m-%d %H:%M:%S")
+#
+#     redis_conn.set(chiave_chat_tempo, timestamp_inizio_str)
+#     return chiave_chat_tempo, timestamp_inizio
+#
+# def aggiorna_chat_a_tempo(redis_conn, chiave_chat_tempo):
+#     timestamp_attuale = datetime.now()
+#     timestamp_inizio = redis_conn.get(chiave_chat_tempo)
+#
+#     if timestamp_inizio:
+#         timestamp_inizio = datetime.fromisoformat(timestamp_inizio.decode())
+#         tempo_trascorso = timestamp_attuale - timestamp_inizio
+#
+#         if tempo_trascorso > timedelta(minutes=1):
+#             redis_conn.delete(chiave_chat_tempo)
+#
+# def verifica_scadenza_chat_a_tempo(redis_conn, chiave_chat_tempo):
+#     timestamp_inizio = redis_conn.get(chiave_chat_tempo)
+#
+#     if timestamp_inizio:
+#         timestamp_inizio = datetime.fromisoformat(timestamp_inizio.decode())
+#         tempo_trascorso = datetime.now() - timestamp_inizio
+#
+#         if tempo_trascorso > timedelta(minutes=1):
+#             redis_conn.delete(chiave_chat_tempo)
+#             return True  # La chat è scaduta
+#     return False
+#
+#
+# def invia_messaggio_chat_tempo(redis_conn, mittente, destinatario, testo, chiave_chat_tempo):
+#     timestamp_inizio = redis_conn.get(chiave_chat_tempo)
+#
+#     if timestamp_inizio:
+#         timestamp_inizio = datetime.fromisoformat(timestamp_inizio.decode())
+#         timestamp_attuale = datetime.now()
+#
+#         if timestamp_attuale - timestamp_inizio <= timedelta(minutes=1):
+#             ora_invio = timestamp_attuale.strftime("%Y-%m-%d %H:%M:%S")
+#             messaggio = f"> {testo} [{ora_invio}]"
+#
+#             chiave_chat = f"chat:{mittente}:{destinatario}"
+#             redis_conn.rpush(chiave_chat, messaggio)
+#
+#             print(f"Messaggio inviato a {destinatario}: {testo}")
+#         else:
+#             print("Impossibile inviare messaggi. La chat a tempo è scaduta.")
+#     else:
+#         print("La chat a tempo non è stata inizializzata correttamente.")
+#
+#     aggiorna_chat_a_tempo(redis_conn, chiave_chat_tempo)
+#     if verifica_scadenza_chat_a_tempo(redis_conn, chiave_chat_tempo):
+#         print("Impossibile inviare messaggi. La chat a tempo è scaduta.")
+#         return
+#
+#     ora_invio = timestamp_attuale.strftime("%Y-%m-%d %H:%M:%S")
+#     messaggio = f"> {testo} [{ora_invio}]"
+#     chiave_chat = f"chat:{mittente}:{destinatario}"
+#
+#     redis_conn.rpush(chiave_chat, messaggio)
+#     print(f"Messaggio inviato a {destinatario}: {testo}")
+#     invia_notifica_push(redis_conn, destinatario)
 
 def leggi_chat(redis_conn, utente_corrente, destinatario):
     chiave_chat = f"chat:{utente_corrente}:{destinatario}"
@@ -182,20 +213,9 @@ def leggi_chat(redis_conn, utente_corrente, destinatario):
 
         print(f"{prefisso} {testo_messaggio}\t[{data_istante_invio}]")
 
-
-def ricevi_notifiche_push(redis_conn, utente_corrente):
-    canale_notifiche = f"notifiche:{utente_corrente}"
-
-    def gestisci_notifica(message):
-        print(f"Notifica ricevuta: {message['data']}")
-
-    pubsub = redis_conn.pubsub()
-    pubsub.subscribe(**{canale_notifiche: gestisci_notifica})
-    thread_notifiche = threading.Thread(target=pubsub.run_in_thread, daemon=True)
-    thread_notifiche.start()
-
-    return canale_notifiche
-
+#def invia_notifica_push(redis_conn, destinatario):
+#    canale_notifiche = f"notifiche:{destinatario}"
+#    redis_conn.publish(canale_notifiche, "Nuovo messaggio inviato")
 
 def connetti_a_redis():
     return redis.Redis(
@@ -204,13 +224,11 @@ def connetti_a_redis():
         password='vZnU3ir0plHo4dvCrSBd3ILtTDJTUDNX'
     )
 
-
 def menu_iniziale():
     print("\nMenù Iniziale:")
     print("1. Registrazione utente")
     print("2. Login")
     print("3. Esci")
-
 
 def gestisci_scelta_iniziale(scelta_iniziale, connessione_redis):
     if scelta_iniziale == '1':
@@ -222,15 +240,16 @@ def gestisci_scelta_iniziale(scelta_iniziale, connessione_redis):
     else:
         print("Scelta non valida. Riprova.")
 
-
 def esegui_login(connessione_redis):
     utente_corrente = None
     while utente_corrente is None:
         utente_corrente = login_utente(connessione_redis)
     menu_dopo_login(connessione_redis, utente_corrente)
 
-
 def menu_dopo_login(connessione_redis, utente_corrente):
+    chat_tempo_attiva = False
+    chiave_chat_tempo = None
+
     while True:
         print("\nMenù principale:")
         print("1. Ricerca utenti")
@@ -238,16 +257,17 @@ def menu_dopo_login(connessione_redis, utente_corrente):
         print("3. Modalità Do Not Disturb")
         print("4. Scrivi messaggio")
         print("5. Avvia chat a tempo")
-        print("6. Visualizza chat")
-        print("7. Torna al Menù Iniziale")
+        print("6. Invia messaggio durante chat a tempo")
+        print("7. Visualizza chat")
+        print("8. Torna al Menù Iniziale")
 
-        scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4/5/6): ")
+        scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4/5/6/7/8): ")
 
-        gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corrente)
+        gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corrente, chat_tempo_attiva,
+                                   chiave_chat_tempo)
 
-        if scelta_dopo_login == '7':
+        if scelta_dopo_login == '8':
             break
-
 
 def gestisci_dnd(connessione_redis, utente_corrente):
     while True:
@@ -269,8 +289,7 @@ def gestisci_dnd(connessione_redis, utente_corrente):
         else:
             print("Scelta non valida. Riprova.")
 
-
-def gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corrente):
+def gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corrente, chat_tempo_attiva, chiave_chat_tempo):
     if scelta_dopo_login == '1':
         ricerca_utenti(connessione_redis)
     elif scelta_dopo_login == '2':
@@ -281,18 +300,23 @@ def gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corr
         destinatario = input("Inserisci il nome utente del destinatario: ")
         testo = input("Inserisci il testo del messaggio: ")
         invia_messaggio(connessione_redis, utente_corrente, destinatario, testo)
-    elif scelta_dopo_login == '5':
-        destinatario = input("Inserisci il nome utente del destinatario: ")
-        chiave_chat_tempo, timestamp_inizio = inizia_chat_a_tempo(connessione_redis, utente_corrente, destinatario)
-        print(f"Chat a tempo con {destinatario} avviata. La chat si chiuderà automaticamente dopo 60 secondi.")
-    elif scelta_dopo_login == '6':
+    # elif scelta_dopo_login == '5':
+    #     destinatario = input("Inserisci il nome utente del destinatario: ")
+    #     chiave_chat_tempo, timestamp_inizio = inizia_chat_a_tempo(connessione_redis, utente_corrente, destinatario)
+    #     print(f"Chat a tempo con {destinatario} avviata. La chat si chiuderà automaticamente dopo 60 secondi.")
+    #     chat_tempo_attiva = True
+    # elif scelta_dopo_login == '6':
+    #     if chat_tempo_attiva:
+    #         destinatario = input("Inserisci il nome utente del destinatario: ")
+    #         testo = input("Inserisci il testo del messaggio: ")
+    #         invia_messaggio_chat_tempo(connessione_redis, utente_corrente, destinatario, testo, chiave_chat_tempo)
+    #     else:
+    #         print("Chat a tempo non attiva. Avvia prima una chat a tempo.")
+    elif scelta_dopo_login == '7':
         destinatario = input("Inserisci il nome utente del destinatario: ")
         leggi_chat(connessione_redis, utente_corrente, destinatario)
-    elif scelta_dopo_login == '7':
-        pass  # Aggiungi qui eventuali altre scelte
     else:
         print("Scelta non valida. Riprova.")
-
 
 def main():
     connessione_redis = connetti_a_redis()
