@@ -8,6 +8,7 @@ Membri:
 - Claudio Manzoni
 
 Descrizione app:
+
 concepita come applicazione di messaggistica che si appoggia a Redis, db chiave:valore, nell'applicazione è possible eseguire il login, la registrazione, cercare altri utenti e aggiungrli alla propria lista contatti, iniziarci delle chat e scabiarsi messaggi, abbiamo provato ad implementare la possibilità di effettuare chat a tempo e di inviare notifiche push ma non siamo riusciti a rendere definitivo il codice quindi lo lasciamo commentato.
 
 Per Installare l'app:
