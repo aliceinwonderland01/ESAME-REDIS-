@@ -16,3 +16,7 @@ Per Installare l'app:
 - Installa le librerie necessarie nel tuo ambiente:
   - redis
   - datetime
+
+Ora siete pronti per utilizzare l'app che potete eseguire direttamente dal prompt con il comando: 'py <percorsofile>/messagggistica.py'
+
+Enjoy!
