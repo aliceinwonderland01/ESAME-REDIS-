@@ -181,8 +181,8 @@ def menu_dopo_login(connessione_redis, utente_corrente):
         print("2. Aggiungi un utente alla tua lista contatti")
         print("3. Modalità Do Not Disturb")
         print("4. Scrivi messaggio")
-        print("6. Visualizza chat")
-        print("7. Torna al Menù Iniziale")
+        print("5. leggi chat")
+        print("6. Torna al Menù Iniziale")
 
         scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4/5/6/7): ")
 
@@ -223,9 +223,11 @@ def gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corr
         destinatario = input("Inserisci il nome utente del destinatario: ")
         testo = input("Inserisci il testo del messaggio: ")
         invia_messaggio(connessione_redis, utente_corrente, destinatario, testo)
-    elif scelta_dopo_login == '7':
+    elif scelta_dopo_login == '5':
         destinatario = input("Inserisci il nome utente del destinatario: ")
         leggi_chat(connessione_redis, utente_corrente, destinatario)
+    elif scelta_dopo_login == '6':
+        menu_iniziale(connessione_redis)
     else:
         print("Scelta non valida. Riprova.")
 
