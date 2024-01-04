@@ -257,11 +257,10 @@ def menu_dopo_login(connessione_redis, utente_corrente):
         print("3. Modalità Do Not Disturb")
         print("4. Scrivi messaggio")
         print("5. Avvia chat a tempo")
-        print("6. Invia messaggio durante chat a tempo")
-        print("7. Visualizza chat")
-        print("8. Torna al Menù Iniziale")
+        print("6. Visualizza chat")
+        print("7. Torna al Menù Iniziale")
 
-        scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4/5/6/7/8): ")
+        scelta_dopo_login = input("Seleziona un'opzione (1/2/3/4/5/6/7): ")
 
         gestisci_scelta_dopo_login(scelta_dopo_login, connessione_redis, utente_corrente, chat_tempo_attiva,
                                    chiave_chat_tempo)
